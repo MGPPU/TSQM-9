@@ -413,3 +413,62 @@ body::before {
     .score-value { font-size: 1.25rem; }
     .btn { padding: 10px 14px; font-size: 0.85rem; }
 }
+
+.btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Флексбокс для идеального выравнивания */
+    display: inline-flex;
+    align-items: center;       /* Центрирует иконку и текст по вертикали */
+    justify-content: center;    /* Центрирует все содержимое по горизонтали */
+    position: relative;
+    gap: 8px;                  /* Фиксированный зазор между иконкой и блоком текста */
+}
+
+/* Блок текста внутри кнопки */
+.btn-text {
+    text-align: center;         /* Сам текст всегда строго по центру */
+    line-height: 1.2;
+}
+
+/* Иконка в отдельном пространстве */
+.btn-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;            /* Иконка никогда не сожмется */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Кнопка "Сохранить результат" — делаем её плотной, светлой и контрастной */
+.secondary-btn {
+    background-color: #ffffff !important; /* Чистый непрозрачный белый цвет */
+    color: #1e293b;                       /* Темно-грифельный текст для сочности */
+    border: 2px solid #e2e8f0;            /* Четкая аккуратная рамка */
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05); /* Мягкая тень для объема */
+}
+
+/* Ховер-эффект (при наведении) */
+.secondary-btn:hover {
+    background-color: #f8fafc !important; /* Легкий благородный серый оттенок */
+    border-color: #cbd5e1;                /* Рамка становится чуть темнее */
+    transform: translateY(-2px);          /* Плавный микро-подскок вверх */
+}
+
+/* Кнопка "Открыть таблицу" — убедимся, что она горит ярким мятным неоном */
+.success-btn {
+    background: var(--accent-grad) !important;
+    color: white !important;
+    box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.4);
+}
+
+.success-btn:hover {
+    box-shadow: 0 12px 24px -5px rgba(16, 185, 129, 0.5);
+    transform: translateY(-2px);
+}

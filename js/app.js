@@ -1,12 +1,20 @@
 import { questions } from './questions.js';
 import { calculateTSQM } from './calculator.js';
 
+// ==========================================
+// КОНФИГУРАЦИЯ ИНТЕГРАЦИИ (МЕНЯЙТЕ ССЫЛКИ ТУТ)
+// ==========================================
+const CONFIG = {
+    // URL вашего развернутого Web App из Google Apps Script для отправки по API
+    GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzyLz5U2B5UiPsS52trKJ0XJovm0FOsB2dHEH47fYec65zYkWYCKaUjZ0RHPVx_MW0-fA/exec",
+    
+    // Ссылка на саму Google Таблицу, которая откроется по кнопке
+    GOOGLE_SHEET_URL: "https://docs.google.com/spreadsheets/d/1MVpcY8gsCorWL-yyh5uBYr6sRlhDs-GPRb7fho4Nu9w/edit?usp=sharing"
+};
+
 let currentStep = 0; 
 let userAnswers = {};
 let userName = "";
-
-// Сюда вставьте URL вашего развернутого Web App из Google Apps Script
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyLz5U2B5UiPsS52trKJ0XJovm0FOsB2dHEH47fYec65zYkWYCKaUjZ0RHPVx_MW0-fA/exec";
 
 const screens = {
     welcome: document.getElementById('welcome-screen'),
@@ -19,9 +27,13 @@ function init() {
     document.getElementById('prev-btn').addEventListener('click', () => changeStep(currentStep - 1));
     document.getElementById('restart-btn').addEventListener('click', resetQuiz);
     document.getElementById('download-json-btn').addEventListener('click', downloadJSON);
-    document.getElementById('send-google-btn').addEventListener('click', sendToGoogleSheets);
 
-    // Фича: Загрузка локального черновика из localStorage
+    // Настраиваем ссылку для кнопки "Открыть таблицу" из конфига
+    const sheetLink = document.getElementById('open-sheet-link');
+    if (sheetLink) {
+        sheetLink.href = CONFIG.GOOGLE_SHEET_URL;
+    }
+
     loadDraft();
 }
 
@@ -80,7 +92,6 @@ function renderQuestion(q) {
         button.innerText = `💊 ${option}`;
         button.addEventListener('click', () => {
             userAnswers[q.id] = scoreValue;
-            // Фича: Сохранение каждого ответа в черновик
             localStorage.setItem('tsqm_answers', JSON.stringify(userAnswers));
             setTimeout(() => changeStep(currentStep + 1), 200);
         });
@@ -92,54 +103,39 @@ function renderQuestion(q) {
 
 function renderResults() {
     const results = calculateTSQM(userAnswers);
-    document.getElementById('score-effectiveness').innerText = results.effectiveness;
-    document.getElementById('score-convenience').innerText = results.convenience;
-    document.getElementById('score-global').innerText = results.global;
+    document.getElementById('score-effectiveness').innerText = Math.round(results.effectiveness);
+    document.getElementById('score-convenience').innerText = Math.round(results.convenience);
+    document.getElementById('score-global').innerText = Math.round(results.global);
 
-    // Фича: Отрисовка Радар-диаграммы (3 оси)
     drawRadarChart(results.effectiveness, results.convenience, results.global);
     
-    // Очищаем черновик, так как тест успешно завершен
+    // АВТОМАТИЧЕСКАЯ ОТПРАВКА ДАННЫХ В GOOGLE ТАБЛИЦУ ЧЕРЕЗ API
+    autoSendToGoogleSheets(results);
+
     localStorage.removeItem('tsqm_step');
     localStorage.removeItem('tsqm_answers');
 }
 
-// Фича: Отрисовка радар-диаграммы на чистом HTML5 Canvas
-// Фича: Отрисовка четкой радар-диаграммы на чистом HTML5 Canvas с учетом Retina/High-DPI экранов
 function drawRadarChart(eff, conv, glob) {
     const canvas = document.getElementById('radarCanvas');
     const ctx = canvas.getContext('2d');
-
-    // 1. Задаем желаемый логический (отображаемый) размер в CSS-пикселях
     const logicalWidth = 300;
     const logicalHeight = 300;
-
-    // Получаем коэффициент плотности пикселей (если не определен, берем 1)
     const dpr = window.devicePixelRatio || 1;
 
-    // 2. Масштабируем внутреннее разрешение холста под реальные физические пиксели экрана
     canvas.width = logicalWidth * dpr;
     canvas.height = logicalHeight * dpr;
-
-    // 3. Через CSS фиксируем отображаемый размер, чтобы холст не растянулся на пол-экрана
     canvas.style.width = logicalWidth + 'px';
     canvas.style.height = logicalHeight + 'px';
-
-    // 4. Масштабируем контекст отрисовки, чтобы весь последующий код рисования работал в логических координатах
     ctx.scale(dpr, dpr);
-
-    // Очищаем холст перед каждым рендером
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
-    // Центр и радиус теперь рассчитываются исходя из логических размеров (300х300)
-    const cx = logicalWidth / 2; // 150
-    const cy = logicalHeight / 2; // 150
+    const cx = logicalWidth / 2;
+    const cy = logicalHeight / 2;
     const r = 100;
-    
-    const angles = [-Math.PI/2, Math.PI/6, 5*Math.PI/6]; // 3 угла для 3 осей шкал
+    const angles = [-Math.PI/2, Math.PI/6, 5*Math.PI/6];
     const labels = ['Эффект.', 'Удобство', 'Общая'];
 
-    // Рисуем сетку (круги/уровни от 20 до 100 баллов)
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 1;
     for(let i = 1; i <= 5; i++) {
@@ -152,7 +148,6 @@ function drawRadarChart(eff, conv, glob) {
         ctx.stroke();
     }
 
-    // Рисуем оси и подписи
     ctx.fillStyle = '#2c3e50';
     ctx.font = '12px sans-serif';
     angles.forEach((angle, i) => {
@@ -160,23 +155,17 @@ function drawRadarChart(eff, conv, glob) {
         ctx.moveTo(cx, cy);
         ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
         ctx.stroke();
-        
         let lx = cx + (r + 20) * Math.cos(angle) - 20;
         let ly = cx + (r + 15) * Math.sin(angle);
         ctx.fillText(labels[i], lx, ly);
     });
 
-    // Расчет точек полигона результатов
     const values = [eff, conv, glob];
     const points = angles.map((angle, i) => {
         let valR = (values[i] / 100) * r;
-        return {
-            x: cx + valR * Math.cos(angle),
-            y: cy + valR * Math.sin(angle)
-        };
+        return { x: cx + valR * Math.cos(angle), y: cy + valR * Math.sin(angle) };
     });
 
-    // Рисуем закрашенный полигон результатов
     ctx.fillStyle = 'rgba(30, 60, 114, 0.4)';
     ctx.strokeStyle = '#1e3c72';
     ctx.lineWidth = 3;
@@ -189,14 +178,18 @@ function drawRadarChart(eff, conv, glob) {
     ctx.stroke();
 }
 
-// Фича: Скачивание результатов в формате JSON
+// Переименованная функция скачивания JSON в "Сохранить результат"
 function downloadJSON() {
     const results = calculateTSQM(userAnswers);
     const exportData = {
         patient: userName,
         date: new Date().toLocaleString('ru-RU'),
         rawAnswers: userAnswers,
-        scores: results
+        scores: {
+            effectiveness: Math.round(results.effectiveness),
+            convenience: Math.round(results.convenience),
+            global: Math.round(results.global)
+        }
     };
     
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -207,38 +200,24 @@ function downloadJSON() {
     a.click();
 }
 
-// Фича: Интеграция с Google Таблицами
-function sendToGoogleSheets() {
-    const btn = document.getElementById('send-google-btn');
-    const results = calculateTSQM(userAnswers);
-    
-    btn.disabled = true;
-    btn.innerText = "Отправка...";
-
+// Автоматическая фоновая отправка результатов по API
+function autoSendToGoogleSheets(results) {
     const payload = {
         name: userName,
         date: new Date().toLocaleString('ru-RU'),
-        effectiveness: results.effectiveness,
-        convenience: results.convenience,
-        global: results.global
+        effectiveness: Math.round(results.effectiveness),
+        convenience: Math.round(results.convenience),
+        global: Math.round(results.global)
     };
 
-    // Отправляем стандартный fetch POST запрос в Google Apps Script
-    fetch(GOOGLE_SCRIPT_URL, {
+    fetch(CONFIG.GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // Важно для обхода CORS ограничений скрипта Google
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(() => {
-        btn.innerText = "Успешно отправлено!";
-        btn.style.backgroundColor = "#059669";
-    })
-    .catch(err => {
-        console.error(err);
-        btn.disabled = false;
-        btn.innerText = "Ошибка! Повторить";
-    });
+    .then(() => console.log("Данные теста успешно отправлены в Google Таблицу автоматически."))
+    .catch(err => console.error("Ошибка автоотправки в таблицу:", err));
 }
 
 function loadDraft() {

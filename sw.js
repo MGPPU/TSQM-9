@@ -7,10 +7,7 @@ const ASSETS = [
   '/TSQM-9/js/questions.js',
   '/TSQM-9/js/calculator.js',
   '/TSQM-9/manifest.json',
-  '/TSQM-9/icon-192.png',
-  '/TSQM-9/icon-512.png',
-  '/TSQM-9/screenshot-mobile.png',
-  '/TSQM-9/screenshot-desktop.png'
+  '/TSQM-9/icon.png'
 ];
 
 // Логика установки

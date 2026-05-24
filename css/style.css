@@ -657,3 +657,42 @@ html, body {
     flex-shrink: 0; /* Смайлик не сжимается */
     margin-right: 2px;
 }
+
+
+/* Обновляем сетку результатов */
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 колонки по умолчанию */
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+/* Адаптив для маленьких экранов */
+@media (max-width: 470px) {
+    .results-grid {
+        grid-template-columns: repeat(2, 1fr); /* На узких экранах — 2 колонки */
+    }
+    
+    /* Уменьшаем размер цифр, если экран совсем крошечный */
+    .score-value {
+        font-size: 1.2rem !important;
+    }
+    
+    .result-card {
+        padding: 8px 2px !important;
+    }
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Две колонки */
+    gap: 10px;
+    width: 100%;
+}
+
+/* Принудительно растягиваем последнюю карточку (3-ю по счету) на всю ширину */
+.result-card:nth-child(3) {
+    grid-column: span 2; 
+}

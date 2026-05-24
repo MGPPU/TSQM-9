@@ -31,7 +31,19 @@ function init() {
     document.getElementById('download-json-btn').addEventListener('click', downloadJSON);
 
 	window.addEventListener('online', processOfflineQueue);
-    document.addEventListener('DOMContentLoaded', processOfflineQueue);
+    // document.addEventListener('DOMContentLoaded', processOfflineQueue);
+
+	// Замена старого вызова на "отложенный" запуск
+window.addEventListener('load', () => {
+    // alert("Скрипт готов и запущен"); // Проверка
+    
+    // Принудительный вызов
+    if (typeof processOfflineQueue === 'function') {
+        processOfflineQueue();
+    } else {
+        // alert("Функция processOfflineQueue не найдена!");
+    }
+});
 	
     // Настраиваем ссылку для кнопки "Открыть таблицу" из конфига
     const sheetLink = document.getElementById('open-sheet-link');
@@ -214,25 +226,29 @@ function downloadJSON() {
     a.click();
 }
 
-// Сохранение в очередь (если нет сети или ошибка отправки)
+// Сохранение в очередь с проверкой на дубли
 function saveToOfflineQueue(payload) {
-    const queue = JSON.parse(localStorage.getItem('offline_submissions') || '[]');
-    queue.push(payload);
-    localStorage.setItem('offline_submissions', JSON.stringify(queue));
-    console.log("Данные сохранены в офлайн-очередь.");
+    let queue = JSON.parse(localStorage.getItem('offline_submissions') || '[]');
+    // Проверяем, нет ли уже такого ID в очереди, чтобы не дублировать
+    if (!queue.find(item => item.submission_id === payload.submission_id)) {
+        queue.push(payload);
+        localStorage.setItem('offline_submissions', JSON.stringify(queue));
+    }
 }
 
 // Попытка отправить всё, что накопилось в очереди
 async function processOfflineQueue() {
+	// alert(1)
+    // Если сети нет, даже не пытаемся
     if (!navigator.onLine) return;
 
     let queue = JSON.parse(localStorage.getItem('offline_submissions') || '[]');
     if (queue.length === 0) return;
 
-    console.log(`Найдено ${queue.length} записей в очереди. Начинаю отправку...`);
-
-    // Отправляем все записи
-    for (const payload of queue) {
+    // ВАЖНО: Мы не очищаем очередь сразу. 
+    // Мы пробуем отправить, и только ПОСЛЕ успешного fetch удаляем запись.
+    for (let i = 0; i < queue.length; i++) {
+        const payload = queue[i];
         try {
             await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
                 method: 'POST',
@@ -240,18 +256,24 @@ async function processOfflineQueue() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            console.log("Запись из очереди успешно отправлена.");
+            // Если дошли сюда — считаем отправленным
+            queue.splice(i, 1);
+            i--; // Корректируем индекс после удаления
+            localStorage.setItem('offline_submissions', JSON.stringify(queue));
         } catch (err) {
-            console.error("Ошибка при отправке записи из очереди:", err);
-            return; // Прерываем цикл, если сеть снова пропала
+            console.error("Ошибка сети, прерываем цикл:", err);
+            break; // Останавливаемся, если сеть пропала в процессе
         }
     }
-    
-    // Если дошли сюда, значит всё успешно ушло
-    localStorage.removeItem('offline_submissions');
 }
 // Автоматическая фоновая отправка результатов по API
 function autoSendToGoogleSheets(results, submissionId) {
+    // 1. Проверяем, не отправляли ли мы этот конкретный ID ранее
+    if (localStorage.getItem('sent_' + submissionId)) {
+        console.log("Данный результат уже был успешно отправлен.");
+        return;
+    }
+
     const formattedAnswers = {};
     Object.keys(userAnswers).forEach((key, index) => {
         formattedAnswers[`q${index + 1}`] = userAnswers[key];
@@ -267,20 +289,25 @@ function autoSendToGoogleSheets(results, submissionId) {
         raw_answers: formattedAnswers
     };
 
-    // Если интернета нет сразу - сохраняем в очередь
+    // 2. Если сети нет, сразу в очередь (не трогая статус 'sent_')
     if (!navigator.onLine) {
         saveToOfflineQueue(payload);
         return;
     }
 
-    // Если интернет есть - пробуем отправить
+    // 3. Если сеть есть - пробуем отправить
     fetch(CONFIG.GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(() => console.log("Данные успешно отправлены."))
+    .then(() => {
+        console.log("Данные успешно отправлены.");
+        // Помечаем ID как отправленный, чтобы при перезагрузке не слать дубль
+        localStorage.setItem('sent_' + submissionId, 'true');
+        isSending = true; 
+    })
     .catch(err => {
         console.error("Ошибка отправки, сохраняю в очередь:", err);
         saveToOfflineQueue(payload);

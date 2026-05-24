@@ -1,16 +1,24 @@
 {
   "short_name": "TSQM-9",
   "name": "Калькулятор удовлетворенности лечением TSQM-9",
+  "description": "Продвинутое веб-приложение для расчета индекса TSQM-9",
   "icons": [
     {
       "src": "icon.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "index.html",
   "background_color": "#1e3c72",
-  "theme-color": "#1e3c72",
+  "theme_color": "#1e3c72",
   "display": "standalone",
   "orientation": "portrait"
 }

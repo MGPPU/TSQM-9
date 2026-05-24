@@ -1,12 +1,16 @@
 const CACHE_NAME = 'tsqm9-v1';
 const ASSETS = [
+  './',
   'index.html',
   'css/style.css',
   'js/app.js',
   'js/questions.js',
   'js/calculator.js',
   'manifest.json',
-  'icon.png'
+  'icon-192.png',
+  'icon-512.png',
+  'screenshot-mobile.png',
+  'screenshot-desktop.png'
 ];
 
 // Установка воркера и кэширование ресурсов

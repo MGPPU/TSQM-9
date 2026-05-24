@@ -105,12 +105,37 @@ function renderResults() {
 }
 
 // Фича: Отрисовка радар-диаграммы на чистом HTML5 Canvas
+// Фича: Отрисовка четкой радар-диаграммы на чистом HTML5 Canvas с учетом Retina/High-DPI экранов
 function drawRadarChart(eff, conv, glob) {
     const canvas = document.getElementById('radarCanvas');
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const cx = 150, cy = 150, r = 100;
+    // 1. Задаем желаемый логический (отображаемый) размер в CSS-пикселях
+    const logicalWidth = 300;
+    const logicalHeight = 300;
+
+    // Получаем коэффициент плотности пикселей (если не определен, берем 1)
+    const dpr = window.devicePixelRatio || 1;
+
+    // 2. Масштабируем внутреннее разрешение холста под реальные физические пиксели экрана
+    canvas.width = logicalWidth * dpr;
+    canvas.height = logicalHeight * dpr;
+
+    // 3. Через CSS фиксируем отображаемый размер, чтобы холст не растянулся на пол-экрана
+    canvas.style.width = logicalWidth + 'px';
+    canvas.style.height = logicalHeight + 'px';
+
+    // 4. Масштабируем контекст отрисовки, чтобы весь последующий код рисования работал в логических координатах
+    ctx.scale(dpr, dpr);
+
+    // Очищаем холст перед каждым рендером
+    ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+
+    // Центр и радиус теперь рассчитываются исходя из логических размеров (300х300)
+    const cx = logicalWidth / 2; // 150
+    const cy = logicalHeight / 2; // 150
+    const r = 100;
+    
     const angles = [-Math.PI/2, Math.PI/6, 5*Math.PI/6]; // 3 угла для 3 осей шкал
     const labels = ['Эффект.', 'Удобство', 'Общая'];
 

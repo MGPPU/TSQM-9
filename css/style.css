@@ -520,3 +520,39 @@ body::before {
         padding: 5px !important;
     }
 }
+
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    
+    /* Жестко фиксируем высоту под мобильный экран, учитывая высоту панелей браузера Safari/Chrome */
+    height: 100vh;
+    height: -webkit-fill-available; /* Фикс для iOS Safari */
+    
+    /* Полностью и принудительно запрещаем скролл самого экрана */
+    overflow: hidden !important;
+    position: fixed !important; 
+    
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 10% 20%, rgba(241, 245, 249, 1) 0%, rgba(226, 232, 240, 1) 100%);
+    color: var(--primary-color);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Фикс для корректного расчета высоты во флекс-контейнерах */
+.app-container {
+    width: 100%;
+    height: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    
+    /* Принудительно зажимаем контейнер в рамки фиксированного body */
+    box-sizing: border-box;
+    max-height: 100%; 
+}

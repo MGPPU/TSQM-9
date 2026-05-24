@@ -30,6 +30,9 @@ function init() {
     document.getElementById('restart-btn').addEventListener('click', resetQuiz);
     document.getElementById('download-json-btn').addEventListener('click', downloadJSON);
 
+	window.addEventListener('online', processOfflineQueue);
+    document.addEventListener('DOMContentLoaded', processOfflineQueue);
+	
     // Настраиваем ссылку для кнопки "Открыть таблицу" из конфига
     const sheetLink = document.getElementById('open-sheet-link');
     if (sheetLink) {
@@ -211,19 +214,47 @@ function downloadJSON() {
     a.click();
 }
 
+// Сохранение в очередь (если нет сети или ошибка отправки)
+function saveToOfflineQueue(payload) {
+    const queue = JSON.parse(localStorage.getItem('offline_submissions') || '[]');
+    queue.push(payload);
+    localStorage.setItem('offline_submissions', JSON.stringify(queue));
+    console.log("Данные сохранены в офлайн-очередь.");
+}
+
+// Попытка отправить всё, что накопилось в очереди
+async function processOfflineQueue() {
+    if (!navigator.onLine) return;
+
+    let queue = JSON.parse(localStorage.getItem('offline_submissions') || '[]');
+    if (queue.length === 0) return;
+
+    console.log(`Найдено ${queue.length} записей в очереди. Начинаю отправку...`);
+
+    // Отправляем все записи
+    for (const payload of queue) {
+        try {
+            await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            console.log("Запись из очереди успешно отправлена.");
+        } catch (err) {
+            console.error("Ошибка при отправке записи из очереди:", err);
+            return; // Прерываем цикл, если сеть снова пропала
+        }
+    }
+    
+    // Если дошли сюда, значит всё успешно ушло
+    localStorage.removeItem('offline_submissions');
+}
 // Автоматическая фоновая отправка результатов по API
 function autoSendToGoogleSheets(results, submissionId) {
     const formattedAnswers = {};
-    
-    // БЕЗОПАСНЫЙ СБОР: Бежим строго по оригинальному массиву вопросов из questions.js
-    // questions — это ваш импортированный массив с описанием всех 9 вопросов
-    questions.forEach((question, index) => {
-        const questionId = question.id; // Получаем реальный ID вопроса (например, 1 или 'q1')
-        const answer = userAnswers[questionId]; // Достаем ответ пользователя именно для ЭТОГО вопроса
-        
-        // Записываем в q1, q2... q9 строго по порядку расположения вопросов в тесте
-        // Если вдруг ответа нет (мало ли), ставим null, чтобы не смещать остальные колонки
-        formattedAnswers[`q${index + 1}`] = answer !== undefined ? answer : "";
+    Object.keys(userAnswers).forEach((key, index) => {
+        formattedAnswers[`q${index + 1}`] = userAnswers[key];
     });
 
     const payload = {
@@ -233,17 +264,27 @@ function autoSendToGoogleSheets(results, submissionId) {
         effectiveness: Math.round(results.effectiveness),
         convenience: Math.round(results.convenience),
         global: Math.round(results.global),
-        raw_answers: formattedAnswers // Теперь здесь идеальный порядок от q1 до q9
+        raw_answers: formattedAnswers
     };
 
+    // Если интернета нет сразу - сохраняем в очередь
+    if (!navigator.onLine) {
+        saveToOfflineQueue(payload);
+        return;
+    }
+
+    // Если интернет есть - пробуем отправить
     fetch(CONFIG.GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
+        mode: 'no-cors', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(() => console.log("Данные успешно отправлены в правильном порядке."))
-    .catch(err => console.error("Ошибка отправки:", err));
+    .then(() => console.log("Данные успешно отправлены."))
+    .catch(err => {
+        console.error("Ошибка отправки, сохраняю в очередь:", err);
+        saveToOfflineQueue(payload);
+    });
 }
 
 function loadDraft() {

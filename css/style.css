@@ -101,6 +101,7 @@ body::before {
     margin-top: 16px;
     overflow: hidden;
     backdrop-filter: blur(5px);
+    flex-shrink: 0;
 }
 
 .progress-bar {
@@ -124,7 +125,7 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 0;
+    min-height: 0; /* Важнейшее свойство для корректного флекс-скролла внутри */
     perspective: 1000px; /* Включаем 3D-пространство для анимации карт */
 }
 
@@ -141,6 +142,7 @@ body::before {
     border: 1px solid rgba(255, 255, 255, 0.6);
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Не дает элементам вываливаться за радиус скругления углов */
     
     /* 3D-анимация появления «накатом» */
     animation: cardIntro 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -156,12 +158,17 @@ body::before {
 }
 
 /* --- 1. ЭКРАН ПРИВЕТСТВИЯ --- */
+#welcome-screen {
+    justify-content: center;
+}
+
 #welcome-screen .welcome-emoji {
     font-size: 3.5rem;
     text-align: center;
     margin-bottom: 10px;
     animation: wave 2.5s ease infinite;
     transform-origin: 70% 70%;
+    flex-shrink: 0;
 }
 
 @keyframes wave {
@@ -181,8 +188,8 @@ body::before {
 }
 .input-group {
     margin-bottom: 10px; /* Увеличили отступ, чтобы отодвинуть кнопку начать тест */
+    flex-shrink: 0;
 }
-
 
 .input-group label {
     display: block;
@@ -220,6 +227,7 @@ body::before {
     font-weight: 800;
     letter-spacing: 1.5px;
     margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
 #question-text {
@@ -227,12 +235,28 @@ body::before {
     font-weight: 700;
     line-height: 1.4;
     margin: 0 0 16px 0;
+    flex-shrink: 0;
 }
 
+/* Эластичный контейнер ответов со скроллбаром */
 .options-container {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-right: 4px;
+    flex: 1 1 auto;              /* Занимает всю доступную высоту, сжимаясь на малых экранах */
+    overflow-y: auto;            /* Включает вертикальную прокрутку при переполнении */
+    -webkit-overflow-scrolling: touch; /* Плавный тач-скролл на iOS устройствах */
+    padding-right: 6px;          /* Отступ справа, чтобы полоса прокрутки не наезжала на кнопки */
+    margin-bottom: 8px;
+}
+
+/* Стилизация полосы прокрутки для вариантов ответов */
+.options-container::-webkit-scrollbar {
+    width: 4px;
+}
+.options-container::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.15);
+    border-radius: 10px;
+}
+.options-container::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 /* Сочные анимированные кнопки вариантов ответов */
@@ -269,11 +293,16 @@ body::before {
 }
 
 /* --- 3. ИТОГОВАЯ СТРАНИЦА (ЭФФЕКТНЫЙ ФИНАЛ) --- */
+#result-screen {
+    justify-content: space-between;
+}
+
 #result-screen h2 {
     font-size: 1.25rem;
     font-weight: 800;
     text-align: center;
     margin: 0 0 12px 0;
+    flex-shrink: 0;
 }
 
 .chart-container {
@@ -285,11 +314,15 @@ body::before {
     border-radius: var(--radius);
     padding: 10px;
     border: 1px solid rgba(255,255,255,0.5);
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 #radarCanvas {
     max-width: 220px;
     max-height: 220px;
+    width: 100%;
+    height: 100%;
 }
 
 /* Сетка результатов */
@@ -298,6 +331,7 @@ body::before {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin-bottom: 14px;
+    flex-shrink: 0;
 }
 
 .result-card {
@@ -335,22 +369,25 @@ body::before {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
 /* --- КНОПКИ С ГРАДИЕНТАМИ И ТЕНЯМИ --- */
 .btn {
-    padding: 14px 20px;
+    padding: 12px 16px;
     border: none;
     border-radius: 14px;
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    text-align: center;
+    
+    /* Флексбокс для идеального выравнивания */
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px; /* Место под эмодзи-иконку */
+    align-items: center;       /* Центрирует иконку и текст по вертикали */
+    justify-content: center;    /* Центрирует все содержимое по горизонтали */
+    position: relative;
+    gap: 8px;                  /* Фиксированный зазор между иконкой и блоком текста */
 }
 
 .btn:active {
@@ -370,84 +407,6 @@ body::before {
 }
 
 .secondary-btn {
-    background-color: #fff;
-    color: #475569;
-    border: 1.5px solid var(--border-color);
-}
-
-.secondary-btn:hover {
-    background-color: var(--bg-color);
-    color: var(--primary-color);
-}
-
-.secondary-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.success-btn {
-    background: var(--accent-grad);
-    color: white;
-    box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.4);
-}
-
-.success-btn:hover {
-    box-shadow: 0 12px 24px -5px rgba(16, 185, 129, 0.5);
-    transform: translateY(-2px);
-}
-
-.nav-controls {
-    margin-top: 12px;
-    flex-shrink: 0;
-}
-
-/* Адаптивный срез под экраны-малыши */
-@media (max-height: 650px) {
-    .app-container { padding: 10px; }
-    .screen { padding: 18px; border-radius: 18px; }
-    #welcome-screen .welcome-emoji { font-size: 2.5rem; }
-    #question-text { font-size: 1rem; margin-bottom: 10px; }
-    .option-btn { padding: 10px 14px; font-size: 0.85rem; margin-bottom: 6px; }
-    #radarCanvas { max-width: 170px; max-height: 170px; }
-    .score-value { font-size: 1.25rem; }
-    .btn { padding: 10px 14px; font-size: 0.85rem; }
-}
-
-.btn {
-    padding: 12px 16px;
-    border: none;
-    border-radius: 14px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    
-    /* Флексбокс для идеального выравнивания */
-    display: inline-flex;
-    align-items: center;       /* Центрирует иконку и текст по вертикали */
-    justify-content: center;    /* Центрирует все содержимое по горизонтали */
-    position: relative;
-    gap: 8px;                  /* Фиксированный зазор между иконкой и блоком текста */
-}
-
-/* Блок текста внутри кнопки */
-.btn-text {
-    text-align: center;         /* Сам текст всегда строго по центру */
-    line-height: 1.2;
-}
-
-/* Иконка в отдельном пространстве */
-.btn-icon {
-    font-size: 1.2rem;
-    flex-shrink: 0;            /* Иконка никогда не сожмется */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Кнопка "Сохранить результат" — делаем её плотной, светлой и контрастной */
-.secondary-btn {
     background-color: #ffffff !important; /* Чистый непрозрачный белый цвет */
     color: #1e293b;                       /* Темно-грифельный текст для сочности */
     border: 2px solid #e2e8f0;            /* Четкая аккуратная рамка */
@@ -461,6 +420,12 @@ body::before {
     transform: translateY(-2px);          /* Плавный микро-подскок вверх */
 }
 
+.secondary-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
 /* Кнопка "Открыть таблицу" — убедимся, что она горит ярким мятным неоном */
 .success-btn {
     background: var(--accent-grad) !important;
@@ -471,4 +436,87 @@ body::before {
 .success-btn:hover {
     box-shadow: 0 12px 24px -5px rgba(16, 185, 129, 0.5);
     transform: translateY(-2px);
+}
+
+/* Нижний блок управления — заблокирован от сжатия, всегда на виду */
+.nav-controls {
+    margin-top: 12px;
+    flex-shrink: 0; /* Гарантирует, что блок кнопок Назад/Далее никогда не сожмется и не исчезнет */
+}
+
+/* Адаптивный срез под маленькие экраны (мобильные устройства) */
+@media (max-height: 680px) {
+    .app-container { padding: 10px; }
+    .screen { padding: 18px; border-radius: 18px; }
+    #welcome-screen .welcome-emoji { font-size: 2.3rem; margin-bottom: 5px; }
+    #welcome-screen p { font-size: 0.9rem; margin-bottom: 12px; }
+    #question-text { font-size: 1rem; margin-bottom: 10px; }
+    .option-btn { padding: 11px 14px; font-size: 0.88rem; margin-bottom: 6px; }
+    #radarCanvas { max-width: 150px; max-height: 150px; }
+    .score-value { font-size: 1.2rem; }
+    .result-card h3 { font-size: 0.65rem; }
+    .btn { padding: 10px 14px; font-size: 0.88rem; }
+    .app-header { margin-bottom: 8px; }
+    .app-header h1 { font-size: 1.25rem; }
+}
+
+/* --- ОБНОВЛЕННЫЙ БЛОК ВАРИАНТОВ ОТВЕТОВ --- */
+.options-container {
+    display: block !important;    /* Сбрасываем флекс, переводим в блочный режим */
+    width: 100%;
+    
+    /* Жестко фиксируем максимальную высоту контейнера: 
+       он не сможет стать выше 35% от общей высоты экрана смартфона */
+    max-height: 35vh !important;  
+    
+    /* Принудительно включаем вертикальный скролл, если контент не влезает */
+    overflow-y: auto !important;  
+    overflow-x: hidden !important;
+    
+    /* Плавная прокрутка для мобильных устройств */
+    -webkit-overflow-scrolling: touch !important; 
+    
+    padding-right: 8px;
+    margin-bottom: 12px;
+}
+
+/* Принудительно уменьшаем внутренние отступы самой карточки, 
+   чтобы освободить место под кнопки навигации */
+.screen {
+    box-sizing: border-box !important;
+    max-height: 80vh !important; /* Ограничиваем общую высоту карточки */
+}
+
+/* --- ЖЕСТКИЙ СРЕЗ ПОД УЛЬТРА-МАЛЕНЬКИЕ ЭКРАНЫ --- */
+@media (max-height: 680px) {
+    /* Максимально сжимаем высоту контейнера с кнопками */
+    .options-container {
+        max-height: 28vh !important; 
+    }
+    
+    /* Уменьшаем высоту самих кнопок, чтобы их помещалось больше */
+    .option-btn {
+        padding: 8px 12px !important; 
+        margin-bottom: 4px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Уменьшаем отступы вокруг вопроса */
+    #question-text {
+        font-size: 0.95rem !important;
+        margin: 0 0 8px 0 !important;
+    }
+    
+    .question-meta {
+        margin-bottom: 4px !important;
+    }
+    
+    /* Ужимаем карточку, чтобы навигация гарантированно поднялась выше */
+    .screen {
+        padding: 12px 16px !important;
+    }
+    
+    .app-container {
+        padding: 5px !important;
+    }
 }

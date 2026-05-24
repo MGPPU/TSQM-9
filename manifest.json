@@ -1,0 +1,16 @@
+{
+  "short_name": "TSQM-9",
+  "name": "Калькулятор удовлетворенности лечением TSQM-9",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#1e3c72",
+  "theme-color": "#1e3c72",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -6,7 +6,8 @@ import { calculateTSQM } from './calculator.js';
 // ==========================================
 const CONFIG = {
     // URL вашего развернутого Web App из Google Apps Script для отправки по API
-    GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzyLz5U2B5UiPsS52trKJ0XJovm0FOsB2dHEH47fYec65zYkWYCKaUjZ0RHPVx_MW0-fA/exec",
+    // GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzyLz5U2B5UiPsS52trKJ0XJovm0FOsB2dHEH47fYec65zYkWYCKaUjZ0RHPVx_MW0-fA/exec",
+	GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbycxHaqLvjc3zhHH-Q_LpVtFcnB_fToiDuYkyoZwUk_pWVT4NVt_Eiaer0u88_jEQbgNA/exec",
     
     // Ссылка на саму Google Таблицу, которая откроется по кнопке
     GOOGLE_SHEET_URL: "https://docs.google.com/spreadsheets/d/1MVpcY8gsCorWL-yyh5uBYr6sRlhDs-GPRb7fho4Nu9w/edit?usp=sharing"
@@ -15,6 +16,7 @@ const CONFIG = {
 let currentStep = 0; 
 let userAnswers = {};
 let userName = "";
+let isSending = false; // Флаг-предохранитель от двойных отправок
 
 const screens = {
     welcome: document.getElementById('welcome-screen'),
@@ -102,15 +104,24 @@ function renderQuestion(q) {
 }
 
 function renderResults() {
+    // Если отправка уже идет, мгновенно блокируем повторный вызов функции
+    if (isSending) return; 
+    isSending = true; 
+
     const results = calculateTSQM(userAnswers);
+    
+    // Генерируем ID ОДИН РАЗ строго на базе времени, без рандома, 
+    // чтобы при случайном двойном клике ID получились абсолютно одинаковыми!
+    const submissionId = "tsqm_" + Math.floor(Date.now() / 1000);
+
     document.getElementById('score-effectiveness').innerText = Math.round(results.effectiveness);
     document.getElementById('score-convenience').innerText = Math.round(results.convenience);
     document.getElementById('score-global').innerText = Math.round(results.global);
 
     drawRadarChart(results.effectiveness, results.convenience, results.global);
     
-    // АВТОМАТИЧЕСКАЯ ОТПРАВКА ДАННЫХ В GOOGLE ТАБЛИЦУ ЧЕРЕЗ API
-    autoSendToGoogleSheets(results);
+    // Передаем данные на отправку
+    autoSendToGoogleSheets(results, submissionId);
 
     localStorage.removeItem('tsqm_step');
     localStorage.removeItem('tsqm_answers');
@@ -201,13 +212,28 @@ function downloadJSON() {
 }
 
 // Автоматическая фоновая отправка результатов по API
-function autoSendToGoogleSheets(results) {
+function autoSendToGoogleSheets(results, submissionId) {
+    const formattedAnswers = {};
+    
+    // БЕЗОПАСНЫЙ СБОР: Бежим строго по оригинальному массиву вопросов из questions.js
+    // questions — это ваш импортированный массив с описанием всех 9 вопросов
+    questions.forEach((question, index) => {
+        const questionId = question.id; // Получаем реальный ID вопроса (например, 1 или 'q1')
+        const answer = userAnswers[questionId]; // Достаем ответ пользователя именно для ЭТОГО вопроса
+        
+        // Записываем в q1, q2... q9 строго по порядку расположения вопросов в тесте
+        // Если вдруг ответа нет (мало ли), ставим null, чтобы не смещать остальные колонки
+        formattedAnswers[`q${index + 1}`] = answer !== undefined ? answer : "";
+    });
+
     const payload = {
+        submission_id: submissionId,
         name: userName,
         date: new Date().toLocaleString('ru-RU'),
         effectiveness: Math.round(results.effectiveness),
         convenience: Math.round(results.convenience),
-        global: Math.round(results.global)
+        global: Math.round(results.global),
+        raw_answers: formattedAnswers // Теперь здесь идеальный порядок от q1 до q9
     };
 
     fetch(CONFIG.GOOGLE_SCRIPT_URL, {
@@ -216,8 +242,8 @@ function autoSendToGoogleSheets(results) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(() => console.log("Данные теста успешно отправлены в Google Таблицу автоматически."))
-    .catch(err => console.error("Ошибка автоотправки в таблицу:", err));
+    .then(() => console.log("Данные успешно отправлены в правильном порядке."))
+    .catch(err => console.error("Ошибка отправки:", err));
 }
 
 function loadDraft() {
@@ -237,6 +263,7 @@ function loadDraft() {
 function resetQuiz() {
     userAnswers = {};
     userName = "";
+    isSending = false; // Сброс флага для нового прохождения
     localStorage.clear();
     document.getElementById('username-input').value = "";
     changeStep(0);

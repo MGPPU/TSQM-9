@@ -2,10 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <base href="/TSQM-9/">
-    
+    <!-- <base href="/TSQM-9/"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор TSQM-9 | Оценка удовлетворенности лечением</title>
+    <title>Калькулятор TSQM-9 | Продвинутая версия</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3c72">
@@ -15,6 +14,7 @@
         <header class="app-header">
             <h1>Опросник TSQM-9</h1>
             <p>Treatment Satisfaction Questionnaire for Medication</p>
+            <div id="user-display" class="user-display hidden">Пациент: <span id="current-user-name"></span></div>
             <div class="progress-bar-container">
                 <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
             </div>
@@ -22,7 +22,11 @@
 
         <main class="app-content">
             <div id="welcome-screen" class="screen">
-                <p>Данный опросник позволяет оценить уровень вашей удовлетворенности лекарственным препаратом, который вы принимаете в течение последних 2-3 недель.</p>
+                <p>Данный опросник позволяет оценить уровень вашей удовлетворенности лекарственным препаратом.</p>
+                <div class="input-group">
+                    <label for="username-input">ФИО или ID пациента (необязательно):</label>
+                    <input type="text" id="username-input" placeholder="Иванов Иван Иванович">
+                </div>
                 <button id="start-btn" class="btn primary-btn">Начать тестирование</button>
             </div>
 
@@ -39,24 +43,31 @@
 
             <div id="result-screen" class="screen hidden">
                 <h2>Результаты анализа удовлетворенности</h2>
+                
+                <div class="chart-container">
+                    <canvas id="radarCanvas" width="300" height="300"></canvas>
+                </div>
+
                 <div class="results-grid">
                     <div class="result-card">
                         <h3>Эффективность</h3>
                         <div class="score-value" id="score-effectiveness">0</div>
-                        <p>Способность препарата облегчать симптомы и лечить проявления.</p>
                     </div>
                     <div class="result-card">
                         <h3>Удобство применения</h3>
                         <div class="score-value" id="score-convenience">0</div>
-                        <p>Простота соблюдения режима дозирования и формы выпуска.</p>
                     </div>
                     <div class="result-card">
                         <h3>Общая удовлетворенность</h3>
                         <div class="score-value" id="score-global">0</div>
-                        <p>Интегральная оценка баланса пользы и общего восприятия лечения.</p>
                     </div>
                 </div>
-                <button id="restart-btn" class="btn primary-btn">Пройти заново</button>
+
+                <div class="action-buttons">
+                    <button id="download-json-btn" class="btn secondary-btn">Скачать JSON</button>
+                    <button id="send-google-btn" class="btn success-btn">Отправить в Google Таблицу</button>
+                </div>
+                <button id="restart-btn" class="btn primary-btn" style="margin-top: 15px;">Пройти заново</button>
             </div>
         </main>
     </div>
@@ -65,10 +76,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Указываем явный путь к воркеру на GitHub Pages
-                navigator.serviceWorker.register('/TSQM-9/sw.js')
-                    .then(reg => console.log('Service Worker успешно зарегистрирован!', reg))
-                    .catch(err => console.error('Ошибка регистрации Service Worker:', err));
+                navigator.serviceWorker.register('/TSQM-9/sw.js');
             });
         }
     </script>

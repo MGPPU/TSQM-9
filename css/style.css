@@ -127,3 +127,55 @@ body {
     color: var(--primary-color);
     margin: 10px 0;
 }
+
+/* Новые стили для продвинутых фич */
+.input-group {
+    margin: 20px 0;
+    text-align: left;
+}
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+.input-group input:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+}
+.user-display {
+    font-size: 0.9rem;
+    background: #e0f2fe;
+    color: var(--primary-color);
+    padding: 6px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 10px;
+    font-weight: 500;
+}
+.chart-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+}
+.success-btn {
+    background-color: #10b981;
+    color: white;
+}
+.success-btn:hover {
+    background-color: #059669;
+}

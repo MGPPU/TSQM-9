@@ -77,7 +77,7 @@ function renderQuestion(q) {
         button.className = 'option-btn';
         if (userAnswers[q.id] === scoreValue) button.classList.add('selected');
         
-        button.innerText = option;
+        button.innerText = `💊 ${option}`;
         button.addEventListener('click', () => {
             userAnswers[q.id] = scoreValue;
             // Фича: Сохранение каждого ответа в черновик

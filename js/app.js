@@ -100,21 +100,32 @@ function renderQuestion(q) {
     const container = document.getElementById('options-container');
     container.innerHTML = '';
 
-    q.options.forEach((option, index) => {
-        const scoreValue = index + 1;
-        const button = document.createElement('button');
-        button.className = 'option-btn';
-        if (userAnswers[q.id] === scoreValue) button.classList.add('selected');
-        
-        button.innerText = `💊 ${option}`;
-        button.addEventListener('click', () => {
-            userAnswers[q.id] = scoreValue;
-            localStorage.setItem('tsqm_answers', JSON.stringify(userAnswers));
-            setTimeout(() => changeStep(currentStep + 1), 200);
-        });
-        container.appendChild(button);
-    });
+// Словарь эмодзи для шкалы (если вариантов 5)
+const emojis = ["😡", "☹️", "🙁", "😐", "🙂", "😊", "🤩"];
 
+q.options.forEach((option, index) => {
+    const scoreValue = index + 1;
+    const button = document.createElement('button');
+    button.className = 'option-btn';
+    
+    // Добавляем эмодзи перед текстом
+    // Если вариантов 5, берем индекс, если больше - просто ставим стандартный
+// Внутри вашего цикла q.options.forEach
+const emoji = emojis[index] || "💊";
+button.innerHTML = `
+    <div class="btn-emoji">${emoji}</div>
+    <div class="btn-text">${option}</div>
+`;
+    
+    if (userAnswers[q.id] === scoreValue) button.classList.add('selected');
+    
+    button.addEventListener('click', () => {
+        userAnswers[q.id] = scoreValue;
+        localStorage.setItem('tsqm_answers', JSON.stringify(userAnswers));
+        setTimeout(() => changeStep(currentStep + 1), 200);
+    });
+    container.appendChild(button);
+});
     document.getElementById('prev-btn').disabled = currentStep === 1;
 }
 

@@ -1,9 +1,9 @@
 {
   "id": "/TSQM-9/",
+  "start_url": "/TSQM-9/index.html",
   "short_name": "TSQM-9",
   "name": "Калькулятор удовлетворенности лечением TSQM-9",
   "description": "Продвинутое веб-приложение для расчета индекса удовлетворенности лечением TSQM-9",
-  "start_url": "index.html",
   "background_color": "#1e3c72",
   "theme_color": "#1e3c72",
   "display": "standalone",

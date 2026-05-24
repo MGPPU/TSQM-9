@@ -2,6 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <base href="/TSQM-9/">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор TSQM-9 | Оценка удовлетворенности лечением</title>
     <link rel="stylesheet" href="css/style.css">
@@ -63,7 +65,8 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js', { scope: './' })
+                // Указываем явный путь к воркеру на GitHub Pages
+                navigator.serviceWorker.register('/TSQM-9/sw.js')
                     .then(reg => console.log('Service Worker успешно зарегистрирован!', reg))
                     .catch(err => console.error('Ошибка регистрации Service Worker:', err));
             });

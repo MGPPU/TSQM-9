@@ -1,19 +1,19 @@
-const CACHE_NAME = 'tsqm9-v1';
+const CACHE_NAME = 'tsqm9-v2';
 const ASSETS = [
-  './',
-  'index.html',
-  'css/style.css',
-  'js/app.js',
-  'js/questions.js',
-  'js/calculator.js',
-  'manifest.json',
-  'icon-192.png',
-  'icon-512.png',
-  'screenshot-mobile.png',
-  'screenshot-desktop.png'
+  '/TSQM-9/',
+  '/TSQM-9/index.html',
+  '/TSQM-9/css/style.css',
+  '/TSQM-9/js/app.js',
+  '/TSQM-9/js/questions.js',
+  '/TSQM-9/js/calculator.js',
+  '/TSQM-9/manifest.json',
+  '/TSQM-9/icon-192.png',
+  '/TSQM-9/icon-512.png',
+  '/TSQM-9/screenshot-mobile.png',
+  '/TSQM-9/screenshot-desktop.png'
 ];
 
-// Установка воркера и кэширование ресурсов
+// Логика установки
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -22,7 +22,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Активация и очистка старого кэша
+// Активация и удаление старого кэша
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -37,7 +37,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Стратегия: Сначала сеть, если нет сети — кэш
+// Стратегия перехвата запросов
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request).catch(() => {
